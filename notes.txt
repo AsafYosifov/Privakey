@@ -1,0 +1,10 @@
+Ultimate goal : Make a router unusable unless a specific DOK is connected
+
+Stepping stones :
+- Create an OpenWRT virtual machine        -----------------------------------------------        (CHECKMARK)
+- Script that turns off an OpenWRT based machine        ----------------------------------        (CHECKMARK)
+- Script that checks if a specific DOK is connected
+- Service for OpenWRT
+- Persistant service for OpenWRT
+- Service that checks if a specific DOK is connected
+- Service that turns off an OpenWRT based machine if a specific DOK isn't connected
