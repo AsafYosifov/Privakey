@@ -1,0 +1,1 @@
+lsusb | grep -q "0781:5591" && echo KEY_CONNECTED || /usr/PROJECT/shutdown &
