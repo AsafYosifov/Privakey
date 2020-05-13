@@ -1,17 +1,11 @@
 #!/bin/sh
 
-replacement_dns="'9.9.9.9'"
-google_dns="'8.8.8.8'"
-param=$1
+dns_line="19"
+dns=${1}
 
 change_dns() {
-	if [ "$param" == "google" ]; then
-		sed -i '19s/'\''.*'\''/'$google_dns'/' /etc/config/network
-		echo changed the dns to google
-
-	elif [ "$param" == "replacement" ]; then
-		sed -i '19s/'\''.*'\''/'$replacement_dns'/' /etc/config/network
-		echo changed the dns to replacement
-
-	fi
+	sed -i "${dns_line}s/'.*'/${dns}/" /etc/config/network
+	echo changed the dns to $dns
 }
+
+change_dns
