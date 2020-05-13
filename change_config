@@ -1,10 +1,10 @@
 #!/bin/sh
 
-dns_line="19"
-dns=${1}
+dns_line="19"	# What line to change
+dns=${1}		# dns=parameter
 
 change_dns() {
-	sed -i "${dns_line}s/'.*'/${dns}/" /etc/config/network
+	sed -i "${dns_line}s/'.*'/${dns}/" /etc/config/network	# replace '.*' (everything between '') in line ${dns_line} (19) with ${dns} (parameter)
 	echo changed the dns to $dns
 }
 
