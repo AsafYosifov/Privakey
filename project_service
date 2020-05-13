@@ -1,11 +1,23 @@
 #!/bin/sh /etc/rc.common
 
-START=99
-STOP=15
+START=01
+STOP=99
+
+custom_dns="'9.9.9.9'"
+google_dns="'8.8.8.8'"
 
 start() {
 	echo starting service
-#	/usr/PROJECT/check_dok &
+
+	#while true; do
+		check_dok_ret=$(/usr/PROJECT/check_dok)
+
+		if [ "$check_dok_ret" == "CONNECTED" ]; then
+			source /usr/PROJECT/change_config ${custom_dns}
+		else
+			source /usr/PROJECT/change_config ${google_dns}
+		fi
+	#done
 }
 
 stop() {
