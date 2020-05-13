@@ -15,19 +15,18 @@ start() {
 	fi
 }
 
-status() {
-	return 0
-}
-
 stop() {
 	if [ ${PID} ]; then
 		echo Stopping daemon with PID - ${PID}
 		kill ${PID}
+		PID=""
 	else
 		echo Daemon with PID - ${PID} doesn\'t exist.
 	fi
 }
 
 restart() {
-	return 0
+	echo Restarting daemon
+	stop
+	start
 }
