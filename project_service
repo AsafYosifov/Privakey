@@ -1,25 +1,36 @@
 #!/bin/sh /etc/rc.common
 
-START=01
-STOP=99
+START=01	# Start this service first
+STOP=99		# End this service last
 
 custom_dns="'9.9.9.9'"
 google_dns="'8.8.8.8'"
 
+PID=$(ps | pgrep -f -o "/bin/sh /sbin/project_daemon")	# Find the PID of the daemon process. -f = Match against entire command line, -o = Show the oldest process only
+
 start() {
-	echo starting service
+	if [ ! ${PID} ]; then
+		(/sbin/project_daemon)&	# Start project_daemon in a subshell and put it in the background
+		PID=$(ps | pgrep -f -o "/bin/sh /sbin/project_daemon")
+		echo Starting daemon with PID - ${PID}	# For debugging purposes
+	else
+		echo project_daemon is already running
+	fi
+}
 
-	#while true; do
-		check_dok_ret=$(/usr/PROJECT/check_dok)
-
-		if [ "$check_dok_ret" == "CONNECTED" ]; then
-			source /usr/PROJECT/change_config ${custom_dns}
-		else
-			source /usr/PROJECT/change_config ${google_dns}
-		fi
-	#done
+status() {
+	return 0
 }
 
 stop() {
-	echo stopping service
+	if [ ${PID} ]; then
+		echo Stopping daemon with PID - ${PID}
+		kill ${PID}
+	else
+		echo Daemon with PID - ${PID} doesn\'t exist.
+	fi
+}
+
+restart() {
+	return 0
 }
