@@ -1,7 +1,6 @@
 # Put your custom commands here that should be executed once
 # the system init finished. By default this file does nothing.
-chmod +x /usr/PROJECT/check_dok
-chmod +x /usr/PROJECT/shutdown
 chmod +x /etc/init.d/project_service
+chmod +x /usr/PROJECT/*
 
 exit 0
