@@ -6,5 +6,5 @@ Stepping stones :
 - Script that checks if a specific DOK is connected        -------------------------------        (CHECKMARK)
 - Service for OpenWRT        -------------------------------------------------------------        (CHECKMARK)
 - Persistant service for OpenWRT
-- Service that checks if a specific DOK is connected
+- Service that checks if a specific DOK is connected        ------------------------------        (CHECKMARK)
 - Service that turns off an OpenWRT based machine if a specific DOK isn't connected
