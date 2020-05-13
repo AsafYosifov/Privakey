@@ -1,0 +1,5 @@
+#!/bin/sh
+
+Filepath="$1"
+
+sed -i -e 's/\r//g' $Filepath
