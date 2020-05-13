@@ -1,0 +1,14 @@
+#!/bin/sh
+
+custom_dns="'9.9.9.9'"
+google_dns="'8.8.8.8'"
+
+while true; do
+	check_dok_ret=$(/usr/PROJECT/check_dok) # Runs check_dok and returns CONNECTED or DISCONNECTED according to check_dok's logic
+	echo $check_dok_ret	# For debugging purposes
+	if [ "$check_dok_ret" == "CONNECTED" ]; then
+		source /usr/PROJECT/change_config "${custom_dns}" # Runs the script change_config with custom_dns as parameter
+	else
+		source /usr/PROJECT/change_config "${google_dns}" # Runs the script change_config with google_dns as parameter
+	fi
+done
