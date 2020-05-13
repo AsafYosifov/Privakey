@@ -3,9 +3,6 @@
 START=01	# Start this service first
 STOP=99		# End this service last
 
-custom_dns="'9.9.9.9'"
-google_dns="'8.8.8.8'"
-
 PID=$(ps | pgrep -f -o "/bin/sh /sbin/project_daemon")	# Find the PID of the daemon process. -f = Match against entire command line, -o = Show the oldest process only
 
 start() {
