@@ -1,0 +1,151 @@
+#!/bin/sh
+
+change_config="#!/bin/sh
+
+dns=\${1}	# dns=parameter
+
+change_dns() {	# replace \"option dns '.*'\" with \"option dns \${dns}\" (parameter) in file /etc/config/network
+	sed -i \"s/option dns '.*'/option dns \${dns}/\" /etc/config/network
+}
+
+change_dns"
+check_dok="lsusb | grep -q \"0781:5591\" && echo CONNECTED || echo DISCONNECTED"
+project_service="#!/bin/sh /etc/rc.common
+
+START=01	# Start this service first
+STOP=99		# End this service last
+
+PID=\$(ps | pgrep -f -o \"/bin/sh /sbin/project_daemon\")	# Find the PID of the daemon process. -f = Match against entire command line, -o = Show the oldest process only
+
+start() {
+	if [ ! \${PID} ]; then
+		(/sbin/project_daemon)&	# Start project_daemon in a subshell and put it in the background
+		PID=\$(ps | pgrep -f -o \"/bin/sh /sbin/project_daemon\")
+		echo Starting daemon with PID - \${PID}	# For debugging purposes
+	else
+		echo project_daemon is already running
+	fi
+}
+
+stop() {
+	if [ \${PID} ]; then
+		echo Stopping daemon with PID - \${PID}
+		kill \${PID}
+		PID=\"\"
+	else
+		echo Daemon with PID - \${PID} doesn\'t exist.
+	fi
+}
+
+restart() {
+	echo Restarting daemon
+	stop
+	start
+}"
+project_daemon="#!/bin/sh
+
+custom_dns=\"'9.9.9.9'\"
+google_dns=\"'8.8.8.8'\"
+
+while true; do
+	check_dok_ret=\$(/usr/PROJECT/check_dok) # Runs check_dok and returns CONNECTED or DISCONNECTED according to check_dok\'s logic
+	if [ \"\$check_dok_ret\" == \"CONNECTED\" ]; then
+		source /usr/PROJECT/change_config \"\${custom_dns}\" # Runs the script change_config with custom_dns as parameter
+	else
+		source /usr/PROJECT/change_config \"\${google_dns}\" # Runs the script change_config with google_dns as parameter
+	fi
+done"
+base_network_config="
+config interface 'loopback'
+	option ifname 'lo'
+	option proto 'static'
+	option ipaddr '127.0.0.1'
+	option netmask '255.0.0.0'
+
+config globals 'globals'
+	option ula_prefix 'fdd2:3842:7632::/48'
+
+config interface 'lan'
+	option type 'bridge'
+	option ifname 'eth0'
+	option proto 'static'
+	option ipaddr '192.168.1.4'
+	option netmask '255.255.255.0'
+	option ip6assign '60'
+	option gateway '192.168.1.1'
+	option dns '8.8.8.8'
+"
+rclocal="chmod +x /etc/init.d/project_service
+chmod +x /usr/PROJECT/*
+chmod +x /sbin/project_daemon
+
+exit 0"
+
+set_base_network_config(){
+	cat > /etc/config/network2 <<- EOM
+		${base_network_config}
+	EOM
+}
+
+
+install_packages(){
+	opkg update
+	opkg install kmod-usb-storage
+	opkg install kmod-usb-storage-uas
+	opkg install usbutils
+}
+
+
+install_PROJECT_files(){
+	mkdir /usr/PROJECT
+
+	cat > /usr/PROJECT/change_config <<- EOM
+		${change_config}
+	EOM
+	cat > /usr/PROJECT/check_dok <<- EOM
+		${check_dok}
+	EOM
+}
+
+
+install_service(){
+	cat > /etc/init.d/project_service <<- EOM
+		${project_service}
+	EOM
+}
+
+
+install_daemon(){
+	cat > /sbin/project_daemon <<- EOM
+		${project_daemon}
+	EOM
+}
+
+
+enable_start_service(){
+	/etc/init.d/project_service enable
+	/etc/init.d/project_service start
+}
+
+
+chmod_necessary_files(){
+	chmod +x /etc/init.d/project_service
+	chmod +x /usr/PROJECT/*
+	chmod +x /sbin/project_daemon
+}
+
+
+install_rclocal(){
+	cat > /etc/rclocal2 <<- EOM
+		${rclocal}
+	EOM
+}
+
+
+install_packages
+install_PROJECT_files
+install_service
+install_daemon
+enable_start_service
+set_base_network_config
+install_rclocal
