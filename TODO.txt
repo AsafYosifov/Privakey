@@ -1,10 +1,12 @@
-Ultimate goal : Make a router unusable unless a specific DOK is connected
+Ultimate goal : Change the router's usage when a specific USB is connected
 
 Stepping stones :
 - Create an OpenWRT virtual machine        -----------------------------------------------        (CHECKMARK)
 - Script that turns off an OpenWRT based machine        ----------------------------------        (CHECKMARK)
 - Script that checks if a specific DOK is connected        -------------------------------        (CHECKMARK)
 - Service for OpenWRT        -------------------------------------------------------------        (CHECKMARK)
-- Persistant service for OpenWRT
+- Persistant service for OpenWRT        --------------------------------------------------        (CHECKMARK)
 - Service that checks if a specific DOK is connected        ------------------------------        (CHECKMARK)
-- Service that turns off an OpenWRT based machine if a specific DOK isn't connected
+- Create a setup file that installs all required packages and scripts         ------------        (CHECKMARK)
+- Disable logs while the USB is connected        -----------------------------------------        (CHECKMARK)
+- Use the "block" tool to use UUID instead of manufacturer ID
