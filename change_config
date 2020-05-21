@@ -1,9 +1,5 @@
 #!/bin/sh
 
-dns=${1}		# dns=parameter
-
-change_dns() {	# replace "option dns '.*'" with "option dns ${dns}" (parameter) in file /etc/config/network
-	sed -i "s/option dns '.*'/option dns ${dns}/" /etc/config/network
+change_dns() {	# replace "option dns '.*'" with "option dns ${1}" (parameter) in file /etc/config/network
+	sed -i "s/option dns '.*'/option dns ${1}/" /etc/config/network
 }
-
-change_dns
