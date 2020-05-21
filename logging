@@ -1,0 +1,17 @@
+#!/bin/sh
+
+disable_system_log() {
+	/etc/init.d/log stop	# Disable system log
+}
+
+enable_system_log() {
+	/etc/init.d/log start	# Enable system log
+}
+
+disable_kernel_log() {
+	echo 0 4 1 7 > /proc/sys/kernel/printk	# Disable kernel log - 000 100 001 111
+}
+
+enable_kernel_log() {
+	echo 7 4 1 7 > /proc/sys/kernel/printk	# Enable kernel log - 111 100 001 111
+}
