@@ -2,13 +2,34 @@
 
 custom_dns="'9.9.9.9'"
 google_dns="'8.8.8.8'"
+previous_check_dok_ret="DEFAULT"
+
+
+disable_logging() {
+	. ./usr/PROJECT/logging && disable_system_log && disable_kernel_log	# Registers the functions disable_system_log and disable_kernel_log from the script logging in the context and calls them
+}
+
+enable_logging() {
+	. ./usr/PROJECT/logging && enable_system_log && enable_kernel_log	# Registers the functions enable_system_log and enable_kernel_log from the script logging in the context and calls them
+}
+
+change_config_func() {
+	. ./usr/PROJECT/change_config && change_dns "${1}"  # Registers the function change_dns from the script change_config in the context and calls it with the parameter ${1}
+}
+
 
 while true; do
-	check_dok_ret=$(/usr/PROJECT/check_dok) # Runs check_dok and returns CONNECTED or DISCONNECTED according to check_dok's logic
-	#echo $check_dok_ret	# For debugging purposes
-	if [ "$check_dok_ret" == "CONNECTED" ]; then
-		source /usr/PROJECT/change_config "${custom_dns}" # Runs the script change_config with custom_dns as parameter
-	else
-		source /usr/PROJECT/change_config "${google_dns}" # Runs the script change_config with google_dns as parameter
+
+	check_dok_ret=$(/usr/PROJECT/check_dok) # Runs check_dok and returns CONNECTED or DISCONNECTED according to check_dok\'s logic
+	
+	if [ "${check_dok_ret}" == "CONNECTED" ] && [ "${previous_check_dok_ret}" != "CONNECTED" ]; then
+		change_config_func "${custom_dns}"
+		disable_logging
+	
+	elif [ "${check_dok_ret}" == "DISCONNECTED" ] && [ "${previous_check_dok_ret}" != "DISCONNECTED" ]; then
+		change_config_func "${google_dns}"
+		enable_logging
 	fi
+
+	previous_check_dok_ret=${check_dok_ret}	# Used in an if statement to make sure the program isn't calling the same functions with the same args over and over again
 done
