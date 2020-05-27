@@ -4,6 +4,11 @@ custom_dns="'9.9.9.9'"
 google_dns="'8.8.8.8'"
 previous_check_dok_ret="DEFAULT"
 
+cat > /usr/PROJECT/persistency.pid <<- EOM	# Write the PID of /bin/sh /sbin/project_persistency
+	$(ps | pgrep -o "/sh/bin /sbin/project_persistency")
+EOM
+
+persistency_PID=$(cat /usr/PROJECT/persistency.pid)	# Save the content (PID) of persistency.pid into persistency_PID
 
 disable_logging() {
 	. ./usr/PROJECT/logging && disable_system_log && disable_kernel_log	# Registers the functions disable_system_log and disable_kernel_log from the script logging in the context and calls them
@@ -17,10 +22,19 @@ change_config_func() {
 	. ./usr/PROJECT/change_config && change_dns "${1}"  # Registers the function change_dns from the script change_config in the context and calls it with the parameter ${1}
 }
 
+check_persistency() {
+	if [ ! ${persistency_PID} ]; then
+		(/sbin/project_persistency)&	# Start project_persistency in a subshell and put it in the background
+		persistency_PID=$(ps | pgrep -o "/bin/sh /sbin/project_persistency")
+	fi
+}
 
-while true; do
 
-	check_dok_ret=$(/usr/PROJECT/check_dok) # Runs check_dok and returns CONNECTED or DISCONNECTED according to check_dok\'s logic
+while false; do
+
+	check_persistency
+
+	check_dok_ret=$(/usr/PROJECT/check_dok) # Runs check_dok and returns CONNECTED or DISCONNECTED according to check_dok's logic
 	
 	if [ "${check_dok_ret}" == "CONNECTED" ] && [ "${previous_check_dok_ret}" != "CONNECTED" ]; then
 		change_config_func "${custom_dns}"
@@ -33,3 +47,4 @@ while true; do
 
 	previous_check_dok_ret=${check_dok_ret}	# Used in an if statement to make sure the program isn't calling the same functions with the same args over and over again
 done
+
