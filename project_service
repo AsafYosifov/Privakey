@@ -3,25 +3,42 @@
 START=01	# Start this service first
 STOP=99		# End this service last
 
-PID=$(ps | pgrep -f -o "/bin/sh /sbin/project_daemon")	# Find the PID of the daemon process. -f = Match against entire command line, -o = Show the oldest process only
+daemon_PID=$(ps | pgrep -o "/bin/sh /sbin/project_daemon")	# Find the PID of the daemon process. -f = Match against entire command line, -o = Show the oldest process only
+persistency_PID=$(ps | pgrep -o "/bin/sh /sbin/project_persistency")
 
 start() {
-	if [ ! ${PID} ]; then
+	if [ ! ${daemon_PID} ]; then
 		(/sbin/project_daemon)&	# Start project_daemon in a subshell and put it in the background
-		PID=$(ps | pgrep -f -o "/bin/sh /sbin/project_daemon")
-		echo Starting daemon with PID - ${PID}	# For debugging purposes
+		daemon_PID=$(ps | pgrep -o "/bin/sh /sbin/project_daemon")
+		echo Starting daemon with PID - ${daemon_PID}	# For debugging purposes
 	else
 		echo project_daemon is already running
+	fi
+
+	if [ ! ${persistency_PID} ]; then
+		(/sbin/project_persistency)&	# Start project_persistency in a subshell and put it in the background
+		persistency_PID=$(ps | pgrep -o "/bin/sh /sbin/project_persistency")
+		echo Starting persistency with PID - ${persistency_PID}	# For debugging purposes
+	else
+		echo project_persistency is already running
 	fi
 }
 
 stop() {
-	if [ ${PID} ]; then
-		echo Stopping daemon with PID - ${PID}
-		kill ${PID}
-		PID=""
+	if [ ${daemon_PID} ]; then
+		echo Stopping daemon with PID - ${daemon_PID}
+		kill ${daemon_PID}
+		daemon_PID=""
 	else
-		echo Daemon with PID - ${PID} doesn\'t exist.
+		echo Daemon with PID - ${daemon_PID} doesn\'t exist.
+	fi
+
+	if [ ${persistency_PID} ]; then
+		echo Stopping persistency with PID - ${persistency_PID}
+		kill ${persistency_PID}
+		persistency_PID=""
+	else
+		echo Persistency with PID - ${persistency_PID} doesn\'t exist.
 	fi
 }
 
