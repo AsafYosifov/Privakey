@@ -1,1 +1,1 @@
-lsusb | grep -q "0781:5591" && echo CONNECTED || echo DISCONNECTED
+block info | grep -q "UUID=\"22E1-EC06\"" && echo CONNECTED || echo DISCONNECTED
