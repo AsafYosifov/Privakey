@@ -187,7 +187,8 @@ install_packages() {
 	opkg update
 	opkg install kmod-usb-storage
 	opkg install kmod-usb-storage-uas
-	opkg install usbutils
+	opkg install block-mount
+	opkg install tor
 }
 
 
@@ -252,6 +253,24 @@ install_logging() {
 }
 
 
+configure_tor() {
+	sed -i -e "
+	/^AutomapHostsOnResolve/s/^/#/
+	\$a AutomapHostsOnResolve 1
+	/^VirtualAddrNetwork/s/^/#/
+	\$a VirtualAddrNetworkIPv4 172.16.0.0/12
+	\$a VirtualAddrNetworkIPv6 fc00::/7
+	/^DNSPort/s/^/#/
+	\$a DNSPort 0.0.0.0:9053
+	\$a DNSPort [::]:9053
+	/^TransPort/s/^/#/
+	\$a TransPort 0.0.0.0:9040
+	\$a TransPort [::]:9040
+	" /etc/tor/torrc
+	/etc/init.d/tor restart
+}
+
+
 install_packages
 install_PROJECT_files
 install_service
@@ -260,4 +279,5 @@ install_persistency
 set_base_network_config
 install_rclocal
 install_logging
+configure_tor
 enable_service
