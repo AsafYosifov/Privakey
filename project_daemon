@@ -4,11 +4,6 @@ custom_dns="'9.9.9.9'"
 google_dns="'8.8.8.8'"
 previous_check_dok_ret="DEFAULT"
 
-cat > /usr/PROJECT/persistency.pid <<- EOM	# Write the PID of /bin/sh /sbin/project_persistency
-	$(ps | pgrep -o "/sh/bin /sbin/project_persistency")
-EOM
-
-persistency_PID=$(cat /usr/PROJECT/persistency.pid)	# Save the content (PID) of persistency.pid into persistency_PID
 
 disable_logging() {
 	. ./usr/PROJECT/logging && disable_system_log && disable_kernel_log	# Registers the functions disable_system_log and disable_kernel_log from the script logging in the context and calls them
@@ -23,14 +18,20 @@ change_config_func() {
 }
 
 check_persistency() {
+	persistency_PID=$(ps | pgrep -o -f "/bin/sh /sbin/project_persistency")
+
 	if [ ! ${persistency_PID} ]; then
 		(/sbin/project_persistency)&	# Start project_persistency in a subshell and put it in the background
-		persistency_PID=$(ps | pgrep -o "/bin/sh /sbin/project_persistency")
+		persistency_PID=$(ps | pgrep -o -f "/bin/sh /sbin/project_persistency")
+
+		cat > /usr/PROJECT/persistency.pid <<- EOM	# Write the PID of /bin/sh /sbin/project_persistency
+			${persistency_PID}
+		EOM
 	fi
 }
 
 
-while false; do
+while true; do
 
 	check_persistency
 
