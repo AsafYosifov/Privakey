@@ -226,9 +226,8 @@ install_persistency() {
 }
 
 
-enable_start_service() {
+enable_service() {
 	/etc/init.d/project_service enable
-	/etc/init.d/project_service start
 }
 
 
@@ -258,7 +257,7 @@ install_PROJECT_files
 install_service
 install_daemon
 install_persistency
-enable_start_service
 set_base_network_config
 install_rclocal
 install_logging
+enable_service
