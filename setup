@@ -4,34 +4,57 @@ change_config="#!/bin/sh
 
 change_dns() {	# replace \"option dns '.*'\" with \"option dns \${1}\" (parameter) in file /etc/config/network
 	sed -i \"s/option dns '.*'/option dns \${1}/\" /etc/config/network
-}
-"
-check_dok="block info | grep -q \"UUID=\\"22E1-EC06\\"\" && echo CONNECTED || echo DISCONNECTED
-"
+}"
+check_dok="block info | grep -q \"UUID=\\"22E1-EC06\\"\" && echo CONNECTED || echo DISCONNECTED"
 project_service="#!/bin/sh /etc/rc.common
 
 START=01	# Start this service first
 STOP=99		# End this service last
 
-PID=\$(ps | pgrep -f -o \"/bin/sh /sbin/project_daemon\")	# Find the PID of the daemon process. -f = Match against entire command line, -o = Show the oldest process only
+daemon_PID=\$(ps | pgrep -o -f \"/bin/sh /sbin/project_daemon\")	# Find the PID of the daemon process. -f = Match against entire command line, -o = Show the oldest process only
+persistency_PID=\$(ps | pgrep -o -f \"/bin/sh /sbin/project_persistency\")
 
 start() {
-	if [ ! \${PID} ]; then
+	if [ ! \${daemon_PID} ]; then
 		(/sbin/project_daemon)&	# Start project_daemon in a subshell and put it in the background
-		PID=\$(ps | pgrep -f -o \"/bin/sh /sbin/project_daemon\")
-		echo Starting daemon with PID - \${PID}	# For debugging purposes
+		daemon_PID=\$(ps | pgrep -o -f \"/bin/sh /sbin/project_daemon\")
+
+		cat > /usr/PROJECT/daemon.pid <<- EOM	# Write the PID of /bin/sh /sbin/project_daemon
+			\${daemon_PID}
+		EOM
+
+		echo Starting daemon with PID - \${daemon_PID}	# For debugging purposes
 	else
 		echo project_daemon is already running
 	fi
 }
 
 stop() {
-	if [ \${PID} ]; then
-		echo Stopping daemon with PID - \${PID}
-		kill \${PID}
-		PID=\"\"
+	daemon_PID=\$(cat /usr/PROJECT/daemon.pid)	# Save the content (PID) of daemon.pid into daemon_PID
+	persistency_PID=\$(cat /usr/PROJECT/persistency.pid)	# Save the content (PID) of persistency.pid into persistency_PID
+	
+	if [ \${daemon_PID} ]; then
+		echo Stopping daemon with PID - \${daemon_PID}
+		kill \${daemon_PID}
+		daemon_PID=\"\"
+
+		cat > /usr/PROJECT/daemon.pid <<- EOM	# Write the PID of /bin/sh /sbin/project_daemon
+			\${daemon_PID}
+		EOM
 	else
-		echo Daemon with PID - \${PID} doesn\'t exist.
+		echo Daemon with PID - \${daemon_PID} doesn\'t exist.
+	fi
+
+	if [ \${persistency_PID} ]; then
+		echo Stopping persistency with PID - \${persistency_PID}
+		kill \${persistency_PID}
+		persistency_PID=\"\"
+
+		cat > /usr/PROJECT/persistency.pid <<- EOM	# Write the PID of /bin/sh /sbin/project_persistency
+			\${persistency_PID}
+		EOM
+	else
+		echo Persistency with PID - \${persistency_PID} doesn\'t exist.
 	fi
 }
 
@@ -48,19 +71,34 @@ previous_check_dok_ret=\"DEFAULT\"
 
 
 disable_logging() {
-	. ./usr/PROJECT/logging && disable_system_log && disable_kernel_log	# Registers the functions disable_system_log and disable_kernel_log from the script logging in the context and calls them
+	source ./usr/PROJECT/logging && disable_system_log && disable_kernel_log	# Registers the functions disable_system_log and disable_kernel_log from the script logging in the context and calls them
 }
 
 enable_logging() {
-	. ./usr/PROJECT/logging && enable_system_log && enable_kernel_log	# Registers the functions enable_system_log and enable_kernel_log from the script logging in the context and calls them
+	source ./usr/PROJECT/logging && enable_system_log && enable_kernel_log	# Registers the functions enable_system_log and enable_kernel_log from the script logging in the context and calls them
 }
 
 change_config_func() {
-	. ./usr/PROJECT/change_config && change_dns \"\${1}\"  # Registers the function change_dns from the script change_config in the context and calls it with the parameter \${1}
+	source ./usr/PROJECT/change_config && change_dns \"\${1}\"  # Registers the function change_dns from the script change_config in the context and calls it with the parameter ${1}
+}
+
+check_persistency() {
+	persistency_PID=\$(ps | pgrep -o -f \"/bin/sh /sbin/project_persistency\")
+
+	if [ ! \${persistency_PID} ]; then
+		(/sbin/project_persistency)&	# Start project_persistency in a subshell and put it in the background
+		persistency_PID=\$(ps | pgrep -o -f \"/bin/sh /sbin/project_persistency\")
+
+		cat > /usr/PROJECT/persistency.pid <<- EOM	# Write the PID of /bin/sh /sbin/project_persistency
+			\${persistency_PID}
+		EOM
+	fi
 }
 
 
 while true; do
+
+	check_persistency
 
 	check_dok_ret=\$(/usr/PROJECT/check_dok) # Runs check_dok and returns CONNECTED or DISCONNECTED according to check_dok's logic
 	
@@ -74,8 +112,26 @@ while true; do
 	fi
 
 	previous_check_dok_ret=\${check_dok_ret}	# Used in an if statement to make sure the program isn't calling the same functions with the same args over and over again
-done
-"
+done"
+project_persistency="#!/bin/sh
+
+check_daemon() {
+	daemon_PID=\$(ps | pgrep -o -f \"/bin/sh /sbin/project_daemon\")
+
+	if [ ! \${daemon_PID} ]; then
+		(/sbin/project_daemon)&	# Start project_persistency in a subshell and put it in the background
+		daemon_PID=\$(ps | pgrep -o -f \"/bin/sh /sbin/project_daemon\")
+
+		cat > /usr/PROJECT/daemon.pid <<- EOM	# Write the PID of /bin/sh /sbin/project_persistency
+			\${daemon_PID}
+		EOM
+	fi
+}
+
+
+while true; do
+	check_daemon
+done"
 base_network_config="
 config interface 'loopback'
 	option ifname 'lo'
@@ -99,6 +155,7 @@ config interface 'lan'
 rclocal="chmod +x /etc/init.d/project_service
 chmod +x /usr/PROJECT/*
 chmod +x /sbin/project_daemon
+chmod +x /sbin/project_persistency
 
 exit 0"
 logging="#!/bin/sh
@@ -120,7 +177,7 @@ enable_kernel_log() {
 }"
 
 set_base_network_config() {
-	cat > /etc/config/network2 <<- EOM
+	cat > /etc/config/network <<- EOM
 		${base_network_config}
 	EOM
 }
@@ -162,6 +219,13 @@ install_daemon() {
 }
 
 
+install_persistency() {
+	cat > /sbin/project_persistency <<- EOM
+		${project_persistency}
+	EOM
+}
+
+
 enable_start_service() {
 	/etc/init.d/project_service enable
 	/etc/init.d/project_service start
@@ -176,7 +240,7 @@ chmod_necessary_files() {
 
 
 install_rclocal() {
-	cat > /etc/rclocal2 <<- EOM
+	cat > /etc/rc.local <<- EOM
 		${rclocal}
 	EOM
 }
@@ -193,6 +257,7 @@ install_packages
 install_PROJECT_files
 install_service
 install_daemon
+install_persistency
 enable_start_service
 set_base_network_config
 install_rclocal
