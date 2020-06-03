@@ -6,15 +6,15 @@ previous_check_dok_ret="DEFAULT"
 
 
 disable_logging() {
-	. ./usr/PROJECT/logging && disable_system_log && disable_kernel_log	# Registers the functions disable_system_log and disable_kernel_log from the script logging in the context and calls them
+	source ./usr/PROJECT/logging && disable_system_log && disable_kernel_log	# Registers the functions disable_system_log and disable_kernel_log from the script logging in the context and calls them
 }
 
 enable_logging() {
-	. ./usr/PROJECT/logging && enable_system_log && enable_kernel_log	# Registers the functions enable_system_log and enable_kernel_log from the script logging in the context and calls them
+	source ./usr/PROJECT/logging && enable_system_log && enable_kernel_log	# Registers the functions enable_system_log and enable_kernel_log from the script logging in the context and calls them
 }
 
 change_config_func() {
-	. ./usr/PROJECT/change_config && change_dns "${1}"  # Registers the function change_dns from the script change_config in the context and calls it with the parameter ${1}
+	source ./usr/PROJECT/change_config && change_dns "${1}"  # Registers the function change_dns from the script change_config in the context and calls it with the parameter ${1}
 }
 
 check_persistency() {
@@ -48,4 +48,3 @@ while true; do
 
 	previous_check_dok_ret=${check_dok_ret}	# Used in an if statement to make sure the program isn't calling the same functions with the same args over and over again
 done
-
