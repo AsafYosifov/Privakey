@@ -1,14 +1,19 @@
 #!/bin/sh
 
-daemon_PID=$(ps | pgrep -o "/bin/sh /sbin/project_daemon")
-
 check_daemon() {
+	daemon_PID=$(ps | pgrep -o -f "/bin/sh /sbin/project_daemon")
+
 	if [ ! ${daemon_PID} ]; then
 		(/sbin/project_daemon)&	# Start project_persistency in a subshell and put it in the background
-		daemon_PID=$(ps | pgrep -o "/bin/sh /sbin/project_daemon")
+		daemon_PID=$(ps | pgrep -o -f "/bin/sh /sbin/project_daemon")
+
+		cat > /usr/PROJECT/daemon.pid <<- EOM	# Write the PID of /bin/sh /sbin/project_persistency
+			${daemon_PID}
+		EOM
 	fi
 }
 
-while false; do
+
+while true; do
 	check_daemon
 done
