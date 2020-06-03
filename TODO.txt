@@ -9,4 +9,5 @@ Stepping stones :
 - Service that checks if a specific DOK is connected        ------------------------------        (CHECKMARK)
 - Create a setup file that installs all required packages and scripts         ------------        (CHECKMARK)
 - Disable logs while the USB is connected        -----------------------------------------        (CHECKMARK)
-- Use the "block" tool to use UUID instead of manufacturer ID
+- Use the "block" tool to use UUID instead of manufacturer ID        ---------------------        (CHECKMARK)
+- Create a new file that keeps the daemon alive, and the daemon keeps it alive        ----        (CHECKMARK)
