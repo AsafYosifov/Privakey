@@ -11,3 +11,7 @@ Stepping stones :
 - Disable logs while the USB is connected        -----------------------------------------        (CHECKMARK)
 - Use the "block" tool to use UUID instead of manufacturer ID        ---------------------        (CHECKMARK)
 - Create a new file that keeps the daemon alive, and the daemon keeps it alive        ----        (CHECKMARK)
+- Understand routing tables
+- Check how to route all network through a SOCKS5 proxy
+- Check how to set up a TOR instance on OpenWRT
+- Route all network through a TOR instance
