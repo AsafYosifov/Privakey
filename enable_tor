@@ -62,12 +62,20 @@ enable_nat6() {
 	| sed -e "/\s[DS]NAT\s/d;/\sMASQUERADE$/d" \
 	| ip6tables-restore -T nat
 	EOF
-	
+
 	uci -q delete firewall.nat6
 	uci set firewall.nat6="include"
 	uci set firewall.nat6.path="/etc/firewall.nat6"
 	uci set firewall.nat6.reload="1"
 }
+
+intercept_ssh
+intercept_http
+intercept_https
+intercept_dns
+intercept_tcp
+disable_lan_wan_forwarding
+enable_nat6
 
 uci commit firewall
 /etc/init.d/firewall restart
