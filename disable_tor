@@ -30,5 +30,13 @@ disable_nat6() {
 	uci -q delete firewall.nat6
 }
 
+revert_ssh
+revert_http
+revert_https
+revert_dns
+revert_tcp
+revert_lan_wan_forwarding
+disable_nat6
+
 uci commit firewall
 /etc/init.d/firewall restart
