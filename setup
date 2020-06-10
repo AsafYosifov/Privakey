@@ -105,10 +105,12 @@ while true; do
 	if [ \"\${check_dok_ret}\" == \"CONNECTED\" ] && [ \"\${previous_check_dok_ret}\" != \"CONNECTED\" ]; then
 		change_config_func \"\${custom_dns}\"
 		disable_logging
+		/usr/PROJECT/enable_tor
 	
 	elif [ \"\${check_dok_ret}\" == \"DISCONNECTED\" ] && [ \"\${previous_check_dok_ret}\" != \"DISCONNECTED\" ]; then
 		change_config_func \"\${google_dns}\"
 		enable_logging
+		/usr/PROJECT/disable_tor
 	fi
 
 	previous_check_dok_ret=\${check_dok_ret}	# Used in an if statement to make sure the program isn't calling the same functions with the same args over and over again
