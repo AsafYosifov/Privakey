@@ -2,8 +2,8 @@
 
 change_config="#!/bin/sh
 
-change_dns() {	# replace \"option dns '.*'\" with \"option dns \${1}\" (parameter) in file /etc/config/network
-	sed -i \"s/option dns '.*'/option dns \${1}/\" /etc/config/network
+change_dns() {	
+	uci set network.@interface[1].dns=\'${1}\'
 }"
 check_dok="block info | grep -q \"UUID=\\"22E1-EC06\\"\" && echo CONNECTED || echo DISCONNECTED"
 project_service="#!/bin/sh /etc/rc.common
