@@ -246,6 +246,14 @@ enable_nat6() {
 	uci set firewall.nat6.reload=\"1\"
 }
 
+intercept_ssh
+intercept_http
+intercept_https
+intercept_dns
+intercept_tcp
+disable_lan_wan_forwarding
+enable_nat6
+
 uci commit firewall
 /etc/init.d/firewall restart"
 disable_tor="#!/bin/sh
@@ -279,6 +287,14 @@ disable_nat6() {
 	rm -f /etc/firewall.nat6
 	uci -q delete firewall.nat6
 }
+
+revert_ssh
+revert_http
+revert_https
+revert_dns
+revert_tcp
+revert_lan_wan_forwarding
+disable_nat6
 
 uci commit firewall
 /etc/init.d/firewall restart"
