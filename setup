@@ -175,6 +175,113 @@ disable_kernel_log() {
 enable_kernel_log() {
 	echo 7 4 1 7 > /proc/sys/kernel/printk	# Enable kernel log - 111 100 001 111
 }"
+enable_tor="#!/bin/sh
+
+intercept_ssh() {
+	uci -q delete firewall.ssh_int
+	uci set firewall.ssh_int=\"redirect\"
+	uci set firewall.ssh_int.name=\"Intercept-SSH\"
+	uci set firewall.ssh_int.src=\"lan\"
+	uci set firewall.ssh_int.src_dport=\"22\"
+	uci set firewall.ssh_int.proto=\"tcp\"
+	uci set firewall.ssh_int.target=\"DNAT\"
+}
+
+intercept_http() {
+	uci -q delete firewall.http_int
+	uci set firewall.http_int=\"redirect\"
+	uci set firewall.http_int.name=\"Intercept-HTTP\"
+	uci set firewall.http_int.src=\"lan\"
+	uci set firewall.http_int.src_dport=\"8080\"
+	uci set firewall.http_int.proto=\"tcp\"
+	uci set firewall.http_int.target=\"DNAT\"
+}
+
+intercept_https() {
+	uci -q delete firewall.https_int
+	uci set firewall.https_int=\"redirect\"
+	uci set firewall.https_int.name=\"Intercept-HTTPS\"
+	uci set firewall.https_int.src=\"lan\"
+	uci set firewall.https_int.src_dport=\"8443\"
+	uci set firewall.https_int.proto=\"tcp\"
+	uci set firewall.https_int.target=\"DNAT\"
+}
+
+intercept_dns() {
+	uci -q delete firewall.dns_int
+	uci set firewall.dns_int=\"redirect\"
+	uci set firewall.dns_int.name=\"Intercept-DNS\"
+	uci set firewall.dns_int.src=\"lan\"
+	uci set firewall.dns_int.src_dport=\"53\"
+	uci set firewall.dns_int.dest_port=\"9053\"
+	uci set firewall.dns_int.proto=\"udp\"
+	uci set firewall.dns_int.target=\"DNAT\"
+}
+
+intercept_tcp() {
+	uci -q delete firewall.tcp_int
+	uci set firewall.tcp_int=\"redirect\"
+	uci set firewall.tcp_int.name=\"Intercept-TCP\"
+	uci set firewall.tcp_int.src=\"lan\"
+	uci set firewall.tcp_int.dest_port=\"9040\"
+	uci set firewall.tcp_int.proto=\"tcp\"
+	uci set firewall.tcp_int.extra=\"--syn\"
+	uci set firewall.tcp_int.target=\"DNAT\"
+}
+
+disable_lan_wan_forwarding() {
+	uci set firewall.@forwarding[0].enabled=\"0\"
+}
+
+enable_nat6() {
+	cat > /etc/firewall.nat6 <<- EOF
+	iptables-save -t nat \\
+	| sed -e \"/\s[DS]NAT\s/d;/\sMASQUERADE$/d\" \\
+	| ip6tables-restore -T nat
+	EOF
+	
+	uci -q delete firewall.nat6
+	uci set firewall.nat6=\"include\"
+	uci set firewall.nat6.path=\"/etc/firewall.nat6\"
+	uci set firewall.nat6.reload=\"1\"
+}
+
+uci commit firewall
+/etc/init.d/firewall restart"
+disable_tor="#!/bin/sh
+
+revert_ssh() {
+	uci -q delete firewall.ssh_int
+}
+
+revert_http() {
+	uci -q delete firewall.http_int
+}
+
+revert_https() {
+	uci -q delete firewall.https_int
+}
+
+revert_dns() {
+	uci -q delete firewall.dns_int
+}
+
+revert_tcp() {
+	uci -q delete firewall.tcp_int
+}
+
+revert_lan_wan_forwarding() {
+	uci delete firewall.@forwarding[0].enabled
+	uci commit firewall
+}
+
+disable_nat6() {
+	rm -f /etc/firewall.nat6
+	uci -q delete firewall.nat6
+}
+
+uci commit firewall
+/etc/init.d/firewall restart"
 
 set_base_network_config() {
 	cat > /etc/config/network <<- EOM
@@ -189,6 +296,7 @@ install_packages() {
 	opkg install kmod-usb-storage-uas
 	opkg install block-mount
 	opkg install tor
+	opkg install kmod-ipt-nat6
 }
 
 
@@ -254,20 +362,36 @@ install_logging() {
 
 
 configure_tor() {
-	sed -i -e "
-	/^AutomapHostsOnResolve/s/^/#/
-	\$a AutomapHostsOnResolve 1
-	/^VirtualAddrNetwork/s/^/#/
-	\$a VirtualAddrNetworkIPv4 172.16.0.0/12
-	\$a VirtualAddrNetworkIPv6 fc00::/7
-	/^DNSPort/s/^/#/
-	\$a DNSPort 0.0.0.0:9053
-	\$a DNSPort [::]:9053
-	/^TransPort/s/^/#/
-	\$a TransPort 0.0.0.0:9040
-	\$a TransPort [::]:9040
-	" /etc/tor/torrc
-	/etc/init.d/tor restart
+	if [ ! $(grep "AutomapHostsOnResolve 1" /etc/tor/torrc) ]; then
+		sed -i -e "
+		/^AutomapHostsOnResolve/s/^/#/
+		\$a AutomapHostsOnResolve 1
+		/^VirtualAddrNetwork/s/^/#/
+		\$a VirtualAddrNetworkIPv4 172.16.0.0/12
+		\$a VirtualAddrNetworkIPv6 fc00::/7
+		/^DNSPort/s/^/#/
+		\$a DNSPort 0.0.0.0:9053
+		\$a DNSPort [::]:9053
+		/^TransPort/s/^/#/
+		\$a TransPort 0.0.0.0:9040
+		\$a TransPort [::]:9040
+		" /etc/tor/torrc
+		/etc/init.d/tor restart
+	fi
+}
+
+
+install_enable_tor() {
+	cat > /usr/PROJECT/enable_tor <<- EOM
+		${enable_tor}
+	EOM
+}
+
+
+install_disable_tor() {
+	cat > /usr/PROJECT/disable_tor <<- EOM
+		${disable_tor}
+	EOM
 }
 
 
@@ -279,5 +403,7 @@ install_persistency
 set_base_network_config
 install_rclocal
 install_logging
+install_enable_tor
+install_disable_tor
 configure_tor
 enable_service
