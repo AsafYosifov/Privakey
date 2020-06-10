@@ -58,9 +58,9 @@ disable_lan_wan_forwarding() {
 
 enable_nat6() {
 	cat > /etc/firewall.nat6 <<- EOF
-	iptables-save -t nat \
-	| sed -e "/\s[DS]NAT\s/d;/\sMASQUERADE$/d" \
-	| ip6tables-restore -T nat
+		iptables-save -t nat \
+| sed -e "/\s[DS]NAT\s/d;/\sMASQUERADE$/d" \
+| ip6tables-restore -T nat
 	EOF
 
 	uci -q delete firewall.nat6
