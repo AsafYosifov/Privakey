@@ -1,0 +1,34 @@
+#!/bin/sh
+
+revert_ssh() {
+	uci -q delete firewall.ssh_int
+}
+
+revert_http() {
+	uci -q delete firewall.http_int
+}
+
+revert_https() {
+	uci -q delete firewall.https_int
+}
+
+revert_dns() {
+	uci -q delete firewall.dns_int
+}
+
+revert_tcp() {
+	uci -q delete firewall.tcp_int
+}
+
+revert_lan_wan_forwarding() {
+	uci delete firewall.@forwarding[0].enabled
+	uci commit firewall
+}
+
+disable_nat6() {
+	rm -f /etc/firewall.nat6
+	uci -q delete firewall.nat6
+}
+
+uci commit firewall
+/etc/init.d/firewall restart
