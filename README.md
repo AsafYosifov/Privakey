@@ -12,5 +12,8 @@ Once everything is running with the correct IDs, all you need to do is connect y
 If you want to stop the program from within the machine, use the command `/etc/init.d/project_service stop`.
 Lastly, you can disconnect your USB at any time for the changes to revert.
 
+On the client side (The devices connected to the router), you can choose to use Status_Display.exe.
+Status_Display.exe shows a red color if the DoK is disconnected from the router, and a green color if it's connected.
+
 ## Tested Versions
 The only tested version of OpenWRT is 19.07.2-x86-64-combined-ext4.
